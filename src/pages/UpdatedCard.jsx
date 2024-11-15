@@ -18,8 +18,10 @@ const UpdatedCard = () => {
   const [Image, setImage] = useState(null)
   const [selectedRate, setSelectedRate] = useState(null);
   const [optionHash, setOptionHash] = useState(null);
-
- 
+  const [propertyId, setPropertyId] = useState("");
+  const [quoteHash, setQuoteHash] = useState("");
+  const [userInfo, setUserInfo] = useState("");
+  
   
 
   const handleNavigation = (nextPage, data = null) => {
@@ -62,6 +64,10 @@ const UpdatedCard = () => {
           selectedRate={selectedRate}
           setOptionHash={setOptionHash}
           optionHash={setOptionHash}
+          setPropertyId={setPropertyId}
+          propertyId={propertyId}
+          setUserInfo={setUserInfo}
+          userInfo={userInfo}
         />
       )}
       {currentPage === "steptwo" && (
@@ -71,6 +77,8 @@ const UpdatedCard = () => {
           onNavigate={() => handleNavigation("stepthree")}
           onBack={() => handleNavigation("stepone")}
           optionHash={optionHash}
+          setQuoteHash={setQuoteHash}
+          selectedRate={selectedRate}
         />
       )}
       {currentPage === "stepthree" && (
@@ -82,6 +90,9 @@ const UpdatedCard = () => {
           onBack={() => handleNavigation("steptwo")}
           totalPrice={totalPrice}
           tokenID={tokenID}
+          propertyId={propertyId}
+          quoteHash={quoteHash}
+          userInfo={userInfo}
         />
       )}
       {currentPage === "success" && (

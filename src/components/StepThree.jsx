@@ -10,12 +10,62 @@ import SucessConfirmation from "./SucessConfirmation";
 import Cancelled from "./Cancelled";
 import Resold from "./Resold";
 
-const StepThree = ({ onNavigate, onBack, totalPrice, tokenID, nftData }) => {
+const StepThree = ({ onNavigate, onBack, totalPrice, tokenID, nftData, propertyId, quoteHash, userInfo }) => {
   const [isLoading, setIsLoading] = useState(false);
   const _tokenId = tokenID;
   const [roomImage, setRoomImage] = useState(null);
-const [bookingData, setBookingData] = useState(null);
-const [navigateTo, setNavigateTo] = useState(null); // New navigation state
+  const [bookingData, setBookingData] = useState(null);
+  const [navigateTo, setNavigateTo] = useState(null); // New navigation state
+
+  const QuoteHash = sessionStorage.getItem("quoteHash");
+  console.log("quote", QuoteHash)
+
+  const firstName = sessionStorage.getItem("firstName");
+
+  const surName = sessionStorage.getItem("lastName");
+
+  const userMail = sessionStorage.getItem("email");
+
+  const countryCode = sessionStorage.getItem('countryCode');
+
+  const phoneNumber = sessionStorage.getItem('phone');
+
+  const hash = sessionStorage.getItem("Hash");
+
+  const remark = sessionStorage.getItem("remarks")
+
+  const txId = localStorage.getItem('transactionId');
+
+  const user = localStorage.getItem("user");
+
+  const discountCoupon = sessionStorage.getItem("discountCoupon");
+
+  const checkIn = sessionStorage.getItem("checkIn");
+
+  const checkOut = sessionStorage.getItem("checkOut");
+
+  const occupancyId = sessionStorage.getItem("occuId")
+
+
+
+
+  console.log('====================================');
+  console.log("prop", propertyId);
+  console.log("quotehash", QuoteHash);
+  console.log("holder", "fname", firstName, "surname", surName);
+  console.log("usermail", userMail);
+  console.log("country code", countryCode);
+  console.log("phNumber", phoneNumber);
+  console.log("hash", hash);
+  console.log("remark", remark);
+  console.log("user", user);
+  console.log("coupon", discountCoupon);
+  console.log("checkin", checkIn);
+  console.log("checkout", checkOut);
+  console.log(userInfo);
+  console.log(nftData);
+  console.log(occupancyId)
+  console.log('====================================');
 
 
   useEffect(() => {
@@ -30,8 +80,17 @@ const [navigateTo, setNavigateTo] = useState(null); // New navigation state
 
           const tokenID = nftData;
 
+          const remarks = data.data.roomRemarks.specialInstructions || "nil";
+          sessionStorage.setItem("remarks", remarks);
+
+          const user = data.data.booking.user;
+          localStorage.setItem("user", user);
+
+          const hash = data.data.booking.hash;
+          sessionStorage.setItem("Hash", hash)
+
           if (data && data.status === true) {
-             setBookingData(data);
+            setBookingData(data);
             // Find the image with mainImage set to true and set roomImage
             const mainImage = data.data.booking.property.images.find(
               (image) => image.mainImage === true
@@ -50,57 +109,94 @@ const [navigateTo, setNavigateTo] = useState(null); // New navigation state
     fetchBookingData();
   }, [nftData]);
 
+
   const checkInDate = bookingData?.data?.checkIn
-  ? new Date(bookingData.data.checkIn)
-  : null;
-const formattedDateCheckIn = checkInDate
-  ? checkInDate.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  })
-  : "";
+    ? new Date(bookingData.data.checkIn)
+    : null;
+  const formattedDateCheckIn = checkInDate
+    ? checkInDate.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    })
+    : "";
 
-const checkOutDate = bookingData?.data?.checkOut
-  ? new Date(bookingData.data.checkOut)
-  : null;
-const formattedDateCheckOut = checkOutDate
-  ? checkOutDate.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  })
-  : "";
+  const checkOutDate = bookingData?.data?.checkOut
+    ? new Date(bookingData.data.checkOut)
+    : null;
+  const formattedDateCheckOut = checkOutDate
+    ? checkOutDate.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    })
+    : "";
 
-      const handleBuyRoom = async () => {
-        setIsLoading(true);
-        console.log("Processing...");
-        if (_tokenId) {
-          try {
-            await buyRoom(_tokenId);
-            setNavigateTo("success"); // Update navigateTo based on successful outcome
-          } catch (error) {
-            console.error("Error executing buyRoom:", error);
-            setNavigateTo("resold"); // Update navigateTo for error case
-          } finally {
-            setIsLoading(false);
-          }
-        } else {
-          console.error("Token ID is not set");
-          setIsLoading(false);
-        }
-      };
-    
-      const handleBuyRoomClick = async () => {
-        await handleBuyRoom(); // Executes buyRoom and updates navigateTo based on outcome
-      };
-    
-      // Conditional redirection based on navigateTo state
-      if (navigateTo === "success") {
-        return <div><SucessConfirmation nftData={nftData} tokenID={tokenID} /></div>; // Replace with your success component
-      } else if (navigateTo === "resold") {
-        return <div><Resold nftData={nftData} tokenID={tokenID} /></div>; // Replace with your error/resold component
+
+  const handleBuyRoom = async () => {
+    setIsLoading(true);
+    console.log("Processing...");
+
+    if (_tokenId) {
+      try {
+        // First, execute the buyRoom function
+        await buyRoom(_tokenId);
+
+        // If the buyRoom call is successful, proceed to call createBooking
+        const bookingParams = {
+          propertyId: propertyId,
+          quoteHash: QuoteHash,
+          holder: {
+            name: firstName,
+            surname: surName
+          },
+          remarks: remark,
+          email: userMail,
+          user: user,
+          checkIn: checkIn,
+          checkOut: checkOut,
+          rooms:
+          {
+            occupancyId: 1,
+            bookingId: nftData,
+            paxes: userInfo
+          },
+          phone: {
+            countryCode: countryCode,
+            number: phoneNumber
+          },
+          hash: hash,
+          discountCoupon: discountCoupon
+        };
+
+
+        const response = await axios.post('/v2/hotel/createBooking', bookingParams);
+        console.log("Booking created successfully:", response.data);
+
+        setNavigateTo("success");
+      } catch (error) {
+        console.error("Error executing buyRoom or createBooking:", error);
+        setNavigateTo("resold"); // Update navigateTo for error case
+      } finally {
+        setIsLoading(false);
       }
+    } else {
+      console.error("Token ID is not set");
+      setIsLoading(false);
+    }
+  };
+
+
+  const handleBuyRoomClick = async () => {
+    await handleBuyRoom(); // Executes buyRoom and updates navigateTo based on outcome
+  };
+
+  // Conditional redirection based on navigateTo state
+  if (navigateTo === "success") {
+    return <div><SucessConfirmation nftData={nftData} tokenID={tokenID} /></div>; // Replace with your success component
+  } else if (navigateTo === "resold") {
+    return <div><Resold nftData={nftData} tokenID={tokenID} /></div>; // Replace with your error/resold component
+  }
 
   return (
     <div className="flex justify-center items-center h-screen bg-black">

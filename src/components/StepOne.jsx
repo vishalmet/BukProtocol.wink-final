@@ -9,29 +9,44 @@ import { BrowserProvider } from "ethers";
 
 import { id } from "ethers";
 
-const StepOne = ({ bookingData, onNavigate, onBack, setData, nftData, setSelectedRate, selectedRate, setOptionHash, optionHash }) => {
+const StepOne = ({ bookingData, onNavigate, onBack, setData, nftData, setSelectedRate, selectedRate, setOptionHash, optionHash, setPropertyId, propertyId, setUserInfo, userInfo }) => {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [emailError, setEmailError] = useState("");
   const [phoneError, setPhoneError] = useState("");
-  const [propertyId, setPropertyId] = useState("");
-  const [userInfo, setUserInfo] = useState("");
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
-  const [roomImage, setRoomImage] = useState(null)
+  const [roomImage, setRoomImage] = useState(null);
+  const [countryCode, setCountryCode] = useState('+');
   // const [data, setData] = useState(null);
   const [optionID, setOptionID] = useState(null);
 
   const handleEmailChange = (e) => {
     setEmail(e.target.value);
-    if (emailError) setEmailError(""); 
+    if (emailError) setEmailError("");
   };
+
 
   const handlePhoneChange = (e) => {
     setPhone(e.target.value);
-    if (phoneError) setPhoneError(""); 
+    if (phoneError) setPhoneError("");
   };
 
+  const handleCountryCodeChange = (e) => {
+    const code = e.target.value;
+    setCountryCode(code); // Update the state immediately
+
+    // Validate the country code only if it starts with a "+"
+    if (code && validateCountryCode(code)) {
+      setPhoneError('');
+      sessionStorage.setItem('countryCode', code);
+    }
+  };
+
+  const PropertyID = propertyId;
+  console.log('====================================');
+  console.log("prop", PropertyID);
+  console.log('====================================');
 
   useEffect(() => {
     const fetchBookingData = async () => {
@@ -72,10 +87,12 @@ const StepOne = ({ bookingData, onNavigate, onBack, setData, nftData, setSelecte
     if (bookingData) {
       setPropertyId(bookingData?.data.booking.property?._id || "");
       setUserInfo(bookingData?.data.userInfo || "");
-      setCheckIn(formatDate(bookingData?.data.checkIn)); 
+      setCheckIn(formatDate(bookingData?.data.checkIn));
       setCheckOut(formatDate(bookingData?.data.checkOut));
     }
   }, [bookingData]);
+  
+
   console.log(bookingData);
   const formatDate = (dateString) => {
     if (!dateString) return "";
@@ -83,50 +100,67 @@ const StepOne = ({ bookingData, onNavigate, onBack, setData, nftData, setSelecte
     return date.toISOString().split("T")[0];
   };
 
+  const userDetails = userInfo;
+  sessionStorage.setItem("userInformation", userDetails);
+
   const fetchHotelData = async () => {
     const occupancyDetails = encodeURIComponent(
       JSON.stringify([{ paxes: [{ age: 21 }, { age: 20 }] }])
     );
-    const url = `https://api.polygon.dassets.xyz/v2/hotel/getHotel?id=${propertyId}&occupancyDetails=${occupancyDetails}&checkIn=${checkIn}&checkOut=${checkOut}`;
-  
+    const url = `https://api.polygon.dassets.xyz/v2/hotel/getHotel?id=${PropertyID}&occupancyDetails=${occupancyDetails}&checkIn=${checkIn}&checkOut=${checkOut}`;
+
     try {
       const response = await axios.get(url);
       console.log("Hotel data:", response.data);
-  
+
       setData(response.data);
-  
-      // Access the first room only
+
+      // Access the rooms array
       const rooms = response.data.rooms;
       if (!Array.isArray(rooms) || rooms.length === 0) {
         console.log("Rooms is not an array or is empty");
         return;
       }
-  
-      const rates = rooms[0].rates; // Access rates from the first room
-      if (!Array.isArray(rates) || rates.length === 0) {
-        console.log("Rates is not an array or is empty for the first room");
-        return;
-      }
-  
-      console.log("Rates array from the first room:", rates); 
-  
-      // Loop through rates and check for rateType
-      for (const rate of rates) {
-        console.log("Current rate object:", rate); // Log each rate object
-        if (rate.rateType === "secondary") {
-          setSelectedRate(rate);
-          setOptionID(rate.optionID);
-          console.log("Selected Rate Object:", rate);
-          console.log("OptionID:", rate.optionID);
-          break; // Exit loop once found
+
+      // Loop through each room to find the rateType "secondary"
+      let selectedRoom = null;
+      let selectedRate = null;
+      let optionID = null;
+      let discountCoupon = null;
+
+      for (const room of rooms) {
+        const rates = room.rates; // Access rates from each room
+        if (Array.isArray(rates) && rates.length > 0) {
+          for (const rate of rates) {
+            console.log("Current rate object:", rate); // Log each rate object
+            if (rate.rateType === "secondary") {
+              selectedRoom = room;
+              selectedRate = rate;
+              optionID = rate.optionID;
+              console.log("Selected Rate Object:", rate);
+              console.log("OptionID:", rate.optionID);
+              break; // Exit loop once found
+            }
+          }
         }
+        if (selectedRoom) break; // Exit the outer loop once a matching rate is found
+      }
+
+      // Check if we found a matching room and rate
+      if (selectedRoom && selectedRate) {
+        setSelectedRate(selectedRate);
+        setOptionID(optionID);
+        console.log("Selected Room Object:", selectedRoom);
+      } else {
+        console.log("No rate with rateType 'secondary' was found");
       }
     } catch (error) {
       console.error("Error fetching hotel data:", error);
     }
   };
-  
-  
+
+
+
   useEffect(() => {
     console.log(checkIn, checkOut, propertyId, userInfo, selectedRate)
     if (propertyId && checkIn && checkOut) {
@@ -153,7 +187,7 @@ const StepOne = ({ bookingData, onNavigate, onBack, setData, nftData, setSelecte
 
   const validatePhone = (phone) => {
     const cleanedNumber = phone.replace(/[\s\-\(\)]/g, '');
-    
+
     // Main regex pattern components:
     // ^            - Start of string
     // \+?          - Optional plus sign for international format
@@ -161,21 +195,23 @@ const StepOne = ({ bookingData, onNavigate, onBack, setData, nftData, setSelecte
     // [0-9]{7,15}  - Between 7 to 15 digits for the main number
     // $            - End of string
     const phoneRegex = /^\+?(?:[0-9]{1,4})?[0-9]{7,15}$/;
-  
+
     if (!cleanedNumber) {
       return false;
     }
-  
+
     if (cleanedNumber.replace(/\D/g, '').length < 7) {
       return false;
     }
-  
+
     if (cleanedNumber.replace(/\D/g, '').length > 15) {
       return false;
     }
-  
+
     return phoneRegex.test(cleanedNumber);
   };
+
+
   // Function to handle the Next button click
   const handleNext = () => {
     let isValid = true;
@@ -210,7 +246,12 @@ const StepOne = ({ bookingData, onNavigate, onBack, setData, nftData, setSelecte
       e.preventDefault();
     }
   };
-  
+
+  const validateCountryCode = (code) => {
+    const countryCodeRegex = /^\+\d{1,4}$/;
+    return countryCodeRegex.test(code);
+  };
+
 
 
   const [signature, setSignature] = useState("");
@@ -414,17 +455,26 @@ const StepOne = ({ bookingData, onNavigate, onBack, setData, nftData, setSelecte
               onChange={handleEmailChange}
               placeholder="Email address"
               className="border border-[#373737] bg-[#222222] sm:text-xs md:text-base rounded-md md:p-2  sm:py-1 mb-2 w-full focus:outline-none focus:ring-[0.5px] focus:ring-[#FFCACA] text-white text-center"
-            />
+            />  
             {emailError && <p className="text-red-500 text-xs">{emailError}</p>}
 
-            <input
-              type="tel"
-              value={phone}
-              onChange={handlePhoneChange}
-              onKeyDown={handlePhoneKeyPress}
-              placeholder="Mobile number"
-              className="border border-[#373737] bg-[#222222] sm:text-xs md:text-base rounded-md md:p-2 md:py-2 sm:py-1 mb-2 w-full focus:outline-none focus:ring-[0.5px] focus:ring-[#FFCACA] text-white text-center"
-            />
+            <div className="border border-[#373737] bg-[#222222] sm:text-xs md:text-base rounded-md md:p-2 md:py-2 sm:py-1 mb-2 w-full gap-3 focus:outline-none focus:ring-[0.5px] focus:ring-[#FFCACA] text-white text-center flex justify-center items-center">
+              <input
+                type="text"
+                value={countryCode}
+                onChange={handleCountryCodeChange}
+                placeholder="+91"
+                className="w-12 bg-transparent flex justify-center outline-none border-r-2 border-white"
+              />
+              <input
+                type="tel"
+                value={phone}
+                onChange={handlePhoneChange}
+                onKeyDown={handlePhoneKeyPress}
+                placeholder="Mobile number"
+                className="w-full bg-transparent outline-none"
+              />
+            </div>
             {phoneError && <p className="text-red-500 text-xs">{phoneError}</p>}
 
             <div className="flex w-full  md:mt-2 items-center justify-center pb-2">

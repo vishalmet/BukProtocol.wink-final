@@ -9,7 +9,7 @@ import step2 from '../assets/updated/step2.png'
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-const StepTwo = ({ onNavigate, onBack, bookingData, nftData, optionHash }) => {
+const StepTwo = ({ onNavigate, onBack, bookingData, nftData, optionHash, setQuoteHash, selectedRate }) => {
   const [quoteData, setQuoteData] = useState(null);
   const [roomImage, setRoomImage] = useState(null);
   const [firstName, setFirstName] = useState('');
@@ -25,7 +25,7 @@ const StepTwo = ({ onNavigate, onBack, bookingData, nftData, optionHash }) => {
             `https://api.polygon.dassets.xyz/v2/hotel/getNFTBooking?tokenId=${nftData}`
           );
           const data = response.data;
-          console.log(data);
+          console.log("gethotel",data);
 
           const tokenID = nftData;
 
@@ -56,6 +56,7 @@ const StepTwo = ({ onNavigate, onBack, bookingData, nftData, optionHash }) => {
   useEffect(() => {
     const fetchQuoteData = async () => {
       const token = localStorage.getItem("accessToken");
+      console.log("access token", token)
 
       // Check that all required data is present before proceeding
       if (
@@ -64,10 +65,14 @@ const StepTwo = ({ onNavigate, onBack, bookingData, nftData, optionHash }) => {
         optionHash
       ) {
         const { hash } = bookingData;
+        sessionStorage.setItem("bookingHash", hash);
+        console.log("ertyui", hash)
+
         // const optionHash = bookingData.rooms[0].rates[0].optionHash;
         const OptHash = optionHash
 
-
+        const discountCoupon = selectedRate?.discount?.discountCoupon;
+        sessionStorage.setItem("discountCoupon", discountCoupon)
 
         try {
           const response = await axios.get(
@@ -81,8 +86,12 @@ const StepTwo = ({ onNavigate, onBack, bookingData, nftData, optionHash }) => {
           const data = response.data;
           // const totalPrice = data.price?.totalWithDiscount;
           // console.log("Total:", totalPrice)
-          setQuoteData(data);
+          setQuoteData("quote res",data);
           // setTotalPrice(totalPrice);
+          const QuoteHash = data.hash;
+          console.log("quotehash", QuoteHash)
+          setQuoteHash("hash", QuoteHash);
+          sessionStorage.setItem("quoteHash", QuoteHash);
 
         } catch (error) {
           console.error("Error fetching hotel quote:", error); // Handle errors

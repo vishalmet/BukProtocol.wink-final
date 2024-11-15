@@ -12,6 +12,7 @@ const LaunchScreen = ({ onNavigate, nftData, setTokenID, tokenID, setTotalPrice 
   const [bookingData, setBookingData] = useState(null);
   const [roomImage, setRoomImage] = useState(null);
 
+
   useEffect(() => {
     const fetchBookingData = async () => {
       if (nftData) {
@@ -24,6 +25,9 @@ const LaunchScreen = ({ onNavigate, nftData, setTokenID, tokenID, setTotalPrice 
 
           const tokenID = nftData;
           setTokenID(tokenID);
+
+          const occupancyId = data?.data?.occupancyRefId;
+          sessionStorage.setItem("occuId", occupancyId)
 
 
           if (data && data.status === true) {
@@ -58,6 +62,8 @@ const LaunchScreen = ({ onNavigate, nftData, setTokenID, tokenID, setTotalPrice 
       year: "numeric",
     })
     : "";
+    sessionStorage.setItem("checkIn", formattedDateCheckIn);
+
 
   const checkOutDate = bookingData?.data?.checkOut
     ? new Date(bookingData.data.checkOut)
@@ -69,6 +75,8 @@ const LaunchScreen = ({ onNavigate, nftData, setTokenID, tokenID, setTotalPrice 
       year: "numeric",
     })
     : "";
+    sessionStorage.setItem("checkOut", formattedDateCheckOut);
+
 
 
   if (!bookingData) {
