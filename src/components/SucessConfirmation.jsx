@@ -46,7 +46,7 @@ const SucessConfirmation = ({tokenID, nftData}) => {
 
   useEffect(() => {
     // Retrieve transaction ID from localStorage
-    const txId = localStorage.getItem('transactionId');
+    const txId = sessionStorage.getItem('transactionId');
     if (txId) {
       setTransactionId(txId);
     }

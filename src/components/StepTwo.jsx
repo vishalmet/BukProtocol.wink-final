@@ -70,6 +70,7 @@ const StepTwo = ({ onNavigate, onBack, bookingData, nftData, optionHash, setQuot
 
         // const optionHash = bookingData.rooms[0].rates[0].optionHash;
         const OptHash = optionHash
+        sessionStorage.setItem("optionHash", OptHash)
 
         const discountCoupon = selectedRate?.discount?.discountCoupon;
         sessionStorage.setItem("discountCoupon", discountCoupon)
@@ -84,6 +85,13 @@ const StepTwo = ({ onNavigate, onBack, bookingData, nftData, optionHash, setQuot
             }
           );
           const data = response.data;
+          console.log('====================================');
+          console.log("getW", data);
+          console.log('====================================');
+
+          const hotelCode = data?.hotelCode;
+          sessionStorage.setItem("hotelCode", hotelCode)
+          console.log("hotelcode", hotelCode)
           // const totalPrice = data.price?.totalWithDiscount;
           // console.log("Total:", totalPrice)
           setQuoteData("quote res",data);
