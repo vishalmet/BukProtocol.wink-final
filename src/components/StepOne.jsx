@@ -17,7 +17,7 @@ const StepOne = ({ bookingData, onNavigate, onBack, setData, nftData, setSelecte
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [roomImage, setRoomImage] = useState(null);
-  const [countryCode, setCountryCode] = useState('+');
+  const [countryCode, setCountryCode] = useState('');
   // const [data, setData] = useState(null);
   const [optionID, setOptionID] = useState(null);
 
@@ -31,17 +31,21 @@ const StepOne = ({ bookingData, onNavigate, onBack, setData, nftData, setSelecte
     setPhone(e.target.value);
     if (phoneError) setPhoneError("");
   };
-
   const handleCountryCodeChange = (e) => {
-    const code = e.target.value;
+    let code = e.target.value;
+  
+    // Remove '+' symbol if it exists
+    code = code.replace(/\+/g, '');
+  
     setCountryCode(code); // Update the state immediately
-
-    // Validate the country code only if it starts with a "+"
+  
+    // Validate the country code
     if (code && validateCountryCode(code)) {
       setPhoneError('');
       sessionStorage.setItem('countryCode', code);
     }
   };
+  
 
   const PropertyID = propertyId;
   console.log('====================================');
@@ -60,10 +64,7 @@ const StepOne = ({ bookingData, onNavigate, onBack, setData, nftData, setSelecte
 
           const tokenID = nftData;
 
-
           if (data && data.status === true) {
-
-
             // Find the image with mainImage set to true and set roomImage
             const mainImage = data.data.booking.property.images.find(
               (image) => image.mainImage === true
@@ -88,10 +89,15 @@ const StepOne = ({ bookingData, onNavigate, onBack, setData, nftData, setSelecte
       setPropertyId(bookingData?.data.booking.property?._id || "");
       setUserInfo(bookingData?.data.userInfo || "");
       setCheckIn(formatDate(bookingData?.data.checkIn));
+  sessionStorage.setItem("CheckIn", formatDate(bookingData?.data.checkIn))
+
+      sessionStorage.setItem("checkInDate", setCheckIn)
       setCheckOut(formatDate(bookingData?.data.checkOut));
+      
     }
   }, [bookingData]);
-  
+
+
 
   console.log(bookingData);
   const formatDate = (dateString) => {
@@ -247,10 +253,15 @@ const StepOne = ({ bookingData, onNavigate, onBack, setData, nftData, setSelecte
     }
   };
 
+  // const validateCountryCode = (code) => {
+  //   const countryCodeRegex = /^\+\d{1,4}$/;
+  //   return countryCodeRegex.test(code);
+  // };
   const validateCountryCode = (code) => {
-    const countryCodeRegex = /^\+\d{1,4}$/;
+    const countryCodeRegex = /^\d{1,4}$/; // Allow 1 to 4 digits without the '+'
     return countryCodeRegex.test(code);
   };
+  
 
 
 

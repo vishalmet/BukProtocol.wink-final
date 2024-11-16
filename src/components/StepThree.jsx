@@ -18,7 +18,8 @@ const StepThree = ({ onNavigate, onBack, totalPrice, tokenID, nftData, propertyI
   const [navigateTo, setNavigateTo] = useState(null); // New navigation state
 
   const QuoteHash = sessionStorage.getItem("quoteHash");
-  console.log("quote", QuoteHash)
+
+  const hotelCode = sessionStorage.getItem("hotelCode");
 
   const firstName = sessionStorage.getItem("firstName");
 
@@ -34,23 +35,41 @@ const StepThree = ({ onNavigate, onBack, totalPrice, tokenID, nftData, propertyI
 
   const remark = sessionStorage.getItem("remarks")
 
-  const txId = localStorage.getItem('transactionId');
 
   const user = localStorage.getItem("user");
 
   const discountCoupon = sessionStorage.getItem("discountCoupon");
 
   const checkIn = sessionStorage.getItem("checkIn");
-
   const checkOut = sessionStorage.getItem("checkOut");
-
+  
+  // Function to format the date
+  const formatDate = (dateString) => {
+    const date = new Date(dateString); // Convert the string to Date object
+    const formattedDate = new Intl.DateTimeFormat('en-CA').format(date); // Format it to YYYY-MM-DD
+    return formattedDate;
+  };
+  
+  // Apply the formatDate function
+  const formattedCheckIn = formatDate(checkIn);
+  const formattedCheckOut = formatDate(checkOut);
+  
+  console.log("Formatted Check-In Date:", formattedCheckIn); // 2024-11-20
+  console.log("Formatted Check-Out Date:", formattedCheckOut); // 2024-11-20
+  
   const occupancyId = sessionStorage.getItem("occuId")
 
+  const token = localStorage.getItem("accessToken"); 
+  
+  const optionHash = sessionStorage.getItem("optionHash");
+  const bookingHash = sessionStorage.getItem("bookingHash")
+  const CheckIn = sessionStorage.getItem("CheckIn")
+  const CheckOut = sessionStorage.getItem("CheckOut")
 
-
+  // const checkInDat = sessionStorage.getItem("checkInDate")
 
   console.log('====================================');
-  console.log("prop", propertyId);
+  console.log("prop", hotelCode);
   console.log("quotehash", QuoteHash);
   console.log("holder", "fname", firstName, "surname", surName);
   console.log("usermail", userMail);
@@ -60,11 +79,15 @@ const StepThree = ({ onNavigate, onBack, totalPrice, tokenID, nftData, propertyI
   console.log("remark", remark);
   console.log("user", user);
   console.log("coupon", discountCoupon);
-  console.log("checkin", checkIn);
-  console.log("checkout", checkOut);
+  console.log("checkin", formattedCheckIn);
+  console.log("checkout", formattedCheckOut);
   console.log(userInfo);
   console.log(nftData);
-  console.log(occupancyId)
+  console.log("occId",occupancyId);
+  console.log(token);
+  // console.log("txId", txId);
+  console.log("optid",optionHash);
+  console.log("hash",bookingHash);
   console.log('====================================');
 
 
@@ -133,63 +156,105 @@ const StepThree = ({ onNavigate, onBack, totalPrice, tokenID, nftData, propertyI
     : "";
 
 
-  const handleBuyRoom = async () => {
-    setIsLoading(true);
-    console.log("Processing...");
 
-    if (_tokenId) {
-      try {
-        // First, execute the buyRoom function
-        await buyRoom(_tokenId);
+// Main function to handle booking
+const handleBuyRoom = async () => {
+  if (isLoading) return; // Prevent duplicate requests
+  setIsLoading(true);
+  console.log("Processing...");
 
-        // If the buyRoom call is successful, proceed to call createBooking
-        const bookingParams = {
-          propertyId: propertyId,
-          quoteHash: QuoteHash,
-          holder: {
-            name: firstName,
-            surname: surName
-          },
-          remarks: remark,
-          email: userMail,
-          user: user,
-          checkIn: checkIn,
-          checkOut: checkOut,
-          rooms:
-          {
-            occupancyId: 1,
-            bookingId: nftData,
-            paxes: userInfo
-          },
-          phone: {
-            countryCode: countryCode,
-            number: phoneNumber
-          },
-          hash: hash,
-          discountCoupon: discountCoupon
-        };
+  // Retrieve the token from localStorage
+  const token = localStorage.getItem("accessToken");
+  if (!token) {
+    console.error("Authorization token is missing.");
+    setIsLoading(false);
+    return;
+  }
 
+  if (_tokenId) {
+    try {
+      // Call the buyRoom function (presumed to interact with blockchain separately)
+      const buyRoomSuccess = await buyRoom(_tokenId);
+  const userAddress = sessionStorage.getItem("userAddress");
+  const txId = sessionStorage.getItem('transactionId');
 
-        const response = await axios.post('/v2/hotel/createBooking', bookingParams);
-        console.log("Booking created successfully:", response.data);
-
-        setNavigateTo("success");
-      } catch (error) {
-        console.error("Error executing buyRoom or createBooking:", error);
-        setNavigateTo("resold"); // Update navigateTo for error case
-      } finally {
-        setIsLoading(false);
+      if (!buyRoomSuccess) {
+        throw new Error("Failed to complete buyRoom transaction.");
       }
-    } else {
-      console.error("Token ID is not set");
+
+      // If buyRoom transaction succeeds, prepare booking parameters
+      const bookingParams = {
+        propertyId: hotelCode,
+        quoteHash: QuoteHash,
+        holder: {
+          name: firstName,
+          surname: surName,
+        },
+        remarks: "",
+        rooms: [
+          {
+            occupancyId: nftData,
+            bookingId: nftData,
+            paxes: [
+              {
+                name: firstName,
+                surname: surName,
+                age: "30",
+                title: "MR",
+              },
+            ],
+          },
+        ],
+        email: userMail,
+        checkIn: formattedCheckIn,
+        checkOut: formattedCheckOut,
+        phone: {
+          countryCode: countryCode,
+          number: phoneNumber,
+        },
+        // hash and user address of current buyer
+        hash: txId,
+        user: userAddress,
+        // hash and user address of seller
+        // hash: hash,
+        // user: user,
+        discountCoupon: "",
+        ip: "",
+      };
+
+      // Set headers with the token
+      const headers = {
+        Authorization: `Bearer ${token}`,
+      };
+
+      // Call the createBooking API
+      const response = await axios.post(
+        "https://api.polygon.dassets.xyz/v2/hotel/createBooking",
+        bookingParams,
+        { headers }
+      );
+
+      console.log("Booking created successfully:", response.data);
+      setNavigateTo("success");
+    } catch (error) {
+      console.error("Error in buyRoom or createBooking:", error);
+      setNavigateTo("resold");
+    } finally {
       setIsLoading(false);
     }
-  };
+  } else {
+    console.error("Token ID is not set.");
+    setIsLoading(false);
+  }
+};
+
+const handleBuyRoomClick = () => {
+  if (!isLoading) {
+    handleBuyRoom();
+  }
+};
 
 
-  const handleBuyRoomClick = async () => {
-    await handleBuyRoom(); // Executes buyRoom and updates navigateTo based on outcome
-  };
 
   // Conditional redirection based on navigateTo state
   if (navigateTo === "success") {

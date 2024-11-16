@@ -4,7 +4,7 @@ import tokenabi from "./tokenabi.json";
 
 const contract_address = "0xe19D79B31278B65Aa7b77F3AEA260A3e21A5a618";
 const usdc_contract = "0x7cB3D276cCBD8DF74D0d7ef550f3201de0C1bF1C";
-const RPC_URL = "https://polygon-amoy.g.alchemy.com/v2/sHUCKj3avsgc_b1afxgc_DHYkbq3kYzM";
+const RPC_URL = "https://polygon-amoy.infura.io/v3/1b78687936a44910bb82d818d810485d";
 
 const amoyNetwork = {
   chainId: "0x1F",
@@ -62,6 +62,7 @@ export const buyRoom = async (_tokenId) => {
 
     // Check allowance using RPC provider (faster read)
     const userAddress = await signer.getAddress();
+    sessionStorage.setItem("userAddress", userAddress);
     const res = await tokenWithProvider.allowance(userAddress, contract_address);
     console.log("Allowance result:", res.toString());
 
@@ -91,7 +92,7 @@ export const buyRoom = async (_tokenId) => {
     console.log("Transaction sent:", transaction.hash);
     const receipt = await transaction.wait();
     console.log("Transaction successful:", receipt);
-    localStorage.setItem("transactionId", transaction.hash);
+    sessionStorage.setItem("transactionId", transaction.hash);
     return receipt;
 
   } catch (error) {
