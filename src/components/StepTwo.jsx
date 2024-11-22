@@ -25,7 +25,7 @@ const StepTwo = ({ onNavigate, onBack, bookingData, nftData, optionHash, setQuot
             `https://api.polygon.dassets.xyz/v2/hotel/getNFTBooking?tokenId=${nftData}`
           );
           const data = response.data;
-          console.log("gethotel",data);
+          console.log("getNFTBooking 2 ",data);
 
           const tokenID = nftData;
 
@@ -58,6 +58,12 @@ const StepTwo = ({ onNavigate, onBack, bookingData, nftData, optionHash, setQuot
       const token = localStorage.getItem("accessToken");
       console.log("access token", token)
 
+
+      console.log("before checking quote", token );
+      console.log("before checking quote", bookingData?.hash );
+      console.log("before checking quote", optionHash );
+      
+
       // Check that all required data is present before proceeding
       if (
         token &&
@@ -86,7 +92,7 @@ const StepTwo = ({ onNavigate, onBack, bookingData, nftData, optionHash, setQuot
           );
           const data = response.data;
           console.log('====================================');
-          console.log("getW", data);
+          console.log("get Quote", data);
           console.log('====================================');
 
           const hotelCode = data?.hotelCode;

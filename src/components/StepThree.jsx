@@ -178,6 +178,9 @@ const handleBuyRoom = async () => {
   const userAddress = sessionStorage.getItem("userAddress");
   const txId = sessionStorage.getItem('transactionId');
 
+console.log("buy room success || tx id",buyRoomSuccess)
+  // console.log("buy room succses", buyRoomSuccess);
+  
       if (!buyRoomSuccess) {
         throw new Error("Failed to complete buyRoom transaction.");
       }
@@ -193,15 +196,21 @@ const handleBuyRoom = async () => {
         remarks: "",
         rooms: [
           {
-            occupancyId: nftData,
-            bookingId: nftData,
+            occupancyId: Number(nftData),
+            bookingId: Number(nftData),
             paxes: [
               {
-                name: firstName,
-                surname: surName,
-                age: "30",
-                title: "MR",
-              },
+                "age": 99,
+                "name": "Cypher",
+                "surname": "Punk",
+                "title": "Mr"
+            },
+            {
+                "age": 99,
+                "name": "Byte",
+                "surname": "Ziro",
+                "title": "Mrs"
+            }
             ],
           },
         ],

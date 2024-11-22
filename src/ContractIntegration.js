@@ -4,7 +4,7 @@ import tokenabi from "./tokenabi.json";
 
 const contract_address = "0xe19D79B31278B65Aa7b77F3AEA260A3e21A5a618";
 const usdc_contract = "0x7cB3D276cCBD8DF74D0d7ef550f3201de0C1bF1C";
-const RPC_URL = "https://polygon-amoy.infura.io/v3/1b78687936a44910bb82d818d810485d";
+const RPC_URL = "https://polygon-amoy.infura.io/v3/95c5fe3fe1504b01a8a1c9a3c428a49f";
 
 const amoyNetwork = {
   chainId: "0x1F",
@@ -53,8 +53,8 @@ export const buyRoom = async (_tokenId) => {
     const signer = await metamaskProvider.getSigner();
 
     // Create contract instances with RPC provider for reading
-    const tokenWithProvider = new ethers.Contract(usdc_contract, tokenabi, rpcProvider);
-    const contractWithProvider = new ethers.Contract(contract_address, abi, rpcProvider);
+    const tokenWithProvider = new ethers.Contract(usdc_contract, tokenabi, signer);
+    const contractWithProvider = new ethers.Contract(contract_address, abi, signer);
 
     // Create contract instances with signer for transactions
     const token = tokenWithProvider.connect(signer);
@@ -63,7 +63,7 @@ export const buyRoom = async (_tokenId) => {
     // Check allowance using RPC provider (faster read)
     const userAddress = await signer.getAddress();
     sessionStorage.setItem("userAddress", userAddress);
-    const res = await tokenWithProvider.allowance(userAddress, contract_address);
+    const res = await token.allowance(userAddress, contract_address);
     console.log("Allowance result:", res.toString());
 
     if (res.toString() === "0") {
@@ -76,8 +76,9 @@ export const buyRoom = async (_tokenId) => {
       console.log("Approval transaction complete:", approve.hash);
     }
 
+   
     // Get gas estimate using RPC provider
-    const gasEstimate = await contractWithProvider.buyRoomBatch.estimateGas(
+    const gasEstimate = await contract.buyRoomBatch.estimateGas(
       [_tokenId],
       { from: userAddress }
     );
@@ -90,14 +91,14 @@ export const buyRoom = async (_tokenId) => {
     });
 
     console.log("Transaction sent:", transaction.hash);
-    const receipt = await transaction.wait();
-    console.log("Transaction successful:", receipt);
+    // const receipt = await transaction.wait();
+    // console.log("Transaction successful:", receipt);
     sessionStorage.setItem("transactionId", transaction.hash);
-    return receipt;
+    return  transaction.hash;
 
   } catch (error) {
     console.error("Error executing buyRoom:", error);
-    
+    //0xad4414c8ca792284cf42e0a91fe805c21bd3e048ea33171a4d9f2f294b37b55c
     if (error.code === 4001) {
       throw new Error("Transaction rejected by user");
     } else if (error.code === -32603) {

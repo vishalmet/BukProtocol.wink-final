@@ -61,6 +61,7 @@ const StepOne = ({ bookingData, onNavigate, onBack, setData, nftData, setSelecte
           );
           const data = response.data;
           console.log(data);
+          console.log("gettNft data" , data);
 
           const tokenID = nftData;
 
@@ -119,6 +120,8 @@ const StepOne = ({ bookingData, onNavigate, onBack, setData, nftData, setSelecte
       const response = await axios.get(url);
       console.log("Hotel data:", response.data);
 
+      console.log("get hotel successs", response.data)
+
       setData(response.data);
 
       // Access the rooms array
@@ -139,15 +142,29 @@ const StepOne = ({ bookingData, onNavigate, onBack, setData, nftData, setSelecte
         if (Array.isArray(rates) && rates.length > 0) {
           for (const rate of rates) {
             console.log("Current rate object:", rate); // Log each rate object
-            if (rate.rateType === "secondary") {
+
+            const opttt = nftData + "|" ; 
+
+            console.log("before checking ", nftData);
+
+            
+            if (rate.rateType === "secondary" && rate.optionID === opttt ) {
               selectedRoom = room;
               selectedRate = rate;
               optionID = rate.optionID;
               console.log("Selected Rate Object:", rate);
               console.log("OptionID:", rate.optionID);
               break; // Exit loop once found
+
+            }
+
+            if (optionID === opttt){
+              console.log("same same but different");
+              return
+              break
             }
           }
+
         }
         if (selectedRoom) break; // Exit the outer loop once a matching rate is found
       }
@@ -176,6 +193,7 @@ const StepOne = ({ bookingData, onNavigate, onBack, setData, nftData, setSelecte
       const optionHash = selectedRate.optionHash;
       console.log("Option Hash:", optionHash);
       setOptionHash(optionHash);
+      
     }
   }, [propertyId, checkIn, checkOut, selectedRate, optionHash]);
   // const TotalPrice = bookingData.data.listingDetails.price;
